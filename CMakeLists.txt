@@ -7,6 +7,7 @@ set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_DEBUG OFF)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE FILEPATH "")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 
 include(GNUInstallDirs)
 include(FetchContent)
@@ -57,32 +58,28 @@ find_package(spdlog CONFIG REQUIRED)
 FetchContent_Declare(
         DKUtil
         GIT_REPOSITORY "https://github.com/gottyduke/DKUtil.git"
-        GIT_TAG a0c0fff5492da6d41c7cfc8f67d6aea922bb77d3
+        GIT_TAG HEAD
+)
+FetchContent_Declare(
+        yaml-cpp
+        GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
+        GIT_TAG HEAD
 )
 FetchContent_MakeAvailable(DKUtil)
+FetchContent_MakeAvailable(yaml-cpp)
 
 # cmake target
 # runtime
 add_commonlibsse_plugin(
         ${PROJECT_NAME}
         SOURCES
-        ${SOURCES}
         ${headers}
+        ${SOURCES}
         ${CMAKE_CURRENT_BINARY_DIR}/include/Plugin.h
         ${CMAKE_CURRENT_BINARY_DIR}/version.rc
         .clang-format
         vcpkg.json
 )
-#add_library(
-#        ${PROJECT_NAME}
-#        SHARED
-#        ${headers}
-#        ${SOURCES}
-#        ${CMAKE_CURRENT_BINARY_DIR}/include/Plugin.h
-#        ${CMAKE_CURRENT_BINARY_DIR}/version.rc
-#        .clang-format
-#        vcpkg.json
-#)
 
 # include dir
 target_include_directories(
@@ -92,6 +89,7 @@ target_include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${DKUtil_SOURCE_DIR}/include
+        ${DKUtil_SOURCE_DIR}/src
 )
 
 # linkage
@@ -99,17 +97,18 @@ target_link_libraries(
         ${PROJECT_NAME}
         PRIVATE
         spdlog::spdlog
+        yaml-cpp::yaml-cpp
         INTERFACE
         DKUtil::DKUtil
 )
 
 # compiler def
 if (MSVC)
-    add_compile_definitions(_UNICODE)
-
+#    add_compile_definitions(_MBCS)
     target_compile_options(
             ${PROJECT_NAME}
             PRIVATE
+            /utf-8
             /MP
             /await
             /W0

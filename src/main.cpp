@@ -1,10 +1,12 @@
-﻿#include "Settings.h"
+﻿#include "LocationalDamageHandler.h"
+#include "Settings.h"
 
 void MessageHandler(SKSE::MessagingInterface::Message* a_msg)
 {
 	switch (a_msg->type) {
 	case SKSE::MessagingInterface::kDataLoaded:
 		Settings::Initialize();
+		LocationalDamageHandler::GetSingleton()->Initialize();
 		break;
 	}
 }
@@ -17,14 +19,11 @@ DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_skse)
 
 	DKUtil::Logger::Init(Plugin::NAME, REL::Module::get().version().string());
 
-	SKSE::Init(a_skse);
+	Init(a_skse);
 	
-	INFO("{} v{} loaded", Plugin::NAME, Plugin::Version);
+	RE::ConsoleLog::GetSingleton()->Print("{} v{} loaded", Plugin::NAME, Plugin::Version);
 
-	auto messaging = SKSE::GetMessagingInterface();
-	if (!messaging->RegisterListener("SKSE", MessageHandler)) {
-		return false;
-	}
+	SKSE::GetMessagingInterface() -> RegisterListener("SKSE", MessageHandler);
 
 	return true;
 }
