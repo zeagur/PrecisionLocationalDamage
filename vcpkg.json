@@ -10,17 +10,5 @@
     "yaml-cpp",
     "commonlibsse-ng",
     "nlohmann-json"
-  ],
-  "features" : {
-    "mo2-install" : {
-      "description" : "Precision Locational Damage NG"
-    },
-    "plugin": {
-      "description": "Build the SKSE plugin.",
-      "dependencies": [
-        "articuno",
-        "commonlibsse-ng"
-      ]
-    }
-  }
+  ]
 }

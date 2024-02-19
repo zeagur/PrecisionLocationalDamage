@@ -370,11 +370,11 @@ namespace PRECISION_API
 	/// Request the Precision API interface.
 	/// Recommended: Send your request when you need to use the API and cache the pointer. SKSEMessagingInterface::kMessage_PostLoad seems to be unreliable for some users for unknown reasons.
 	/// </summary>
-	/// <param name="a_interfaceVersion">The interface version to request</param>
+	/// <param name="a_interfaceVersion">The interface version to reques	t</param>
 	/// <returns>The pointer to the API singleton, or nullptr if request failed</returns>
 	[[nodiscard]] inline void* RequestPluginAPI(const InterfaceVersion a_interfaceVersion = InterfaceVersion::V4)
 	{
-		auto pluginHandle = GetModuleHandle("Precision.dll");
+		auto pluginHandle = GetModuleHandle(L"Precision.dll");
 		_RequestPluginAPI requestAPIFunction = (_RequestPluginAPI)SKSE::WinAPI::GetProcAddress(pluginHandle, "RequestPluginAPI");
 		if (requestAPIFunction) {
 			return requestAPIFunction(a_interfaceVersion);

@@ -1,29 +1,27 @@
-﻿#include "LocationalDamageHandler.h"
-#include "Settings.h"
-
-void MessageHandler(SKSE::MessagingInterface::Message* a_msg)
+﻿void MessageHandler(SKSE::MessagingInterface::Message* a_msg)
 {
 	switch (a_msg->type) {
 	case SKSE::MessagingInterface::kDataLoaded:
 		Settings::Initialize();
-		LocationalDamageHandler::GetSingleton()->Initialize();
+		LocationalDamageHandler::Initialize();
+		break;
+	default:
 		break;
 	}
 }
 
-DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_skse)
-{
-#ifndef NDEBUG
-	while (!IsDebuggerPresent()) { Sleep(100); }
-#endif
+SKSEPluginLoad(const SKSE::LoadInterface *skse) {
+	SKSE::Init(skse);
 
-	DKUtil::Logger::Init(Plugin::NAME, REL::Module::get().version().string());
+	SetupLog();
 
-	Init(a_skse);
-	
-	RE::ConsoleLog::GetSingleton()->Print("{} v{} loaded", Plugin::NAME, Plugin::Version);
+	auto* plugin = SKSE::PluginDeclaration::GetSingleton();
+	auto name = plugin->GetName();
+	auto version = plugin->GetVersion();
+	logger::info("SKSE plugin : {} v{} loaded", name, version);
 
-	SKSE::GetMessagingInterface() -> RegisterListener("SKSE", MessageHandler);
+	// Once all plugins and mods are loaded, then the ~ console is ready and can
+	SKSE::GetMessagingInterface()->RegisterListener("SKSE", MessageHandler);
 
 	return true;
 }

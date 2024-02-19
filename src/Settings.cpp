@@ -41,7 +41,7 @@ namespace Settings {
 						if (newKeyword) {
 							newHitEffect.weaponKeywords.push_back(newKeyword);
 						} else {
-							WARN("could not get keyword from {}", input)
+							logger::warn("could not get keyword from {}", input);
 						}
 						
 					}
@@ -63,7 +63,7 @@ namespace Settings {
 					if (newKeyword) {
 						newHitEffect.weaponKeywords.push_back(newKeyword);
 					} else {
-						WARN("could not get keyword from {}", input)
+						logger::warn("could not get keyword from {}", input);
 					}
 				}
 			}
@@ -85,7 +85,7 @@ namespace Settings {
 				if (newSpellItem) {
 					newHitEffect.spellForm = newSpellItem;
 				} else {
-					WARN("could not get spell from {}", input)
+					logger::warn("could not get spell from {}", input);
 				}
 				
 			}
@@ -111,23 +111,21 @@ namespace Settings {
 			g_hitEffectVector.push_back(newHitEffect);
 		}
 
-		INFO("finished parsing .yamls :)")
-
-		LocationalDamageHandler::Initialize();
+		logger::info("finished parsing .yamls :)");
 	}
 
 	void ParseConfigs(std::set<std::string>& a_configs) {
 		for (auto config : a_configs) {
 			auto path = std::filesystem::path(config).filename();
 			auto filename = path.string();
-			INFO("Parsing {}", filename);
+			logger::info("Parsing {}", filename);
 
 			try {
 				std::ifstream i(config);
 				if (i.good()) {
 					json data;
 					try {
-						INFO("Converting {} to JSON object", filename);
+						logger::info("Converting {} to JSON object", filename);
 						data = tojson::loadyaml(config);
 					}
 					catch (const std::exception& exc) {
@@ -169,7 +167,7 @@ namespace Settings {
 		}
 
 		if (configs.empty()) {
-			WARN("no valid .yaml files found; returning")
+			logger::warn("no valid .yaml files found; returning");
 			return;
 		}
 
