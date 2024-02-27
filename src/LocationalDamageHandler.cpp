@@ -45,7 +45,7 @@ PRECISION_API::PreHitCallbackReturn LocationalDamageHandler::OnPrecisionPreHit(c
 			if (std::ranges::find(hitEffect.nodeNames, hitRigidBodyName) == hitEffect.nodeNames.end())
 				return;
 
-			if (isnan(hitEffect.damageMult))
+			if (!isnan(hitEffect.damageMult))
 				newModifier.modifierValue = hitEffect.damageMult;
 		}();
 	}
