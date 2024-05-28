@@ -4,8 +4,8 @@ cmake_minimum_required(VERSION 3.21)
 
 # Set your project name. This will be the name of your SKSE .dll file.
 project(
-        PrecisionLocationalDamageNG
-        VERSION 1.0.0
+        PrecisionLocationalDamage
+        VERSION 2.0.0
         LANGUAGES CXX
 )
 
