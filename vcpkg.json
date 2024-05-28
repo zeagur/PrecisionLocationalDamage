@@ -1,17 +1,15 @@
 {
-    "name":  "precisionlocationaldamage",
-    "version-string":  "1.1.2",
-    "description":  "",
-    "license":  "LGPL-2.1",
-    "dependencies":  [
-                         "boost-algorithm",
-                         "rapidxml",
-                         "spdlog",
-                         "yaml-cpp"
-                     ],
-    "features":  {
-                     "mo2-install":  {
-                                         "description":  "Precision Locational Damage"
-                                     }
-                 }
+  "name" : "precisionlocationaldamageng",
+  "version-string" : "1.0.0",
+  "description" : "",
+  "license" : "LGPL-2.1",
+  "dependencies" : [
+    "catch2",
+    "boost-algorithm",
+    "rapidxml",
+    "rapidcsv",
+    "spdlog",
+    "yaml-cpp",
+    "nlohmann-json"
+  ]
 }

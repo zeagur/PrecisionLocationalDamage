@@ -1,128 +1,106 @@
 #include "LocationalDamageHandler.h"
 #include "PrecisionAPI.h"
 
-namespace LocationalDamageHandler
+bool LocationalDamageHandler::isTargetValid(const RE::TESObjectREFR* target)
 {
+	return target && target->GetFormType() == RE::FormType::ActorCharacter && !target->IsDead();
+}
 
-	auto magicSource = RE::MagicSystem::CastingSource::kInstant;
+bool LocationalDamageHandler::isRigidBodyValid(const RE::hkpRigidBody* hitRigidBody)
+{
+	return hitRigidBody && hitRigidBody->name.data();
+}
 
-	PRECISION_API::PreHitCallbackReturn OnPrecisionPreHit(const PRECISION_API::PrecisionHitData& a_precisionHitData) {
-		PRECISION_API::PreHitCallbackReturn ret;
+bool LocationalDamageHandler::isCriticalHit(const RE::HitData& hitData)
+{
+	return hitData.flags.any(RE::HitData::Flag::kCritical);
+}
 
-		RE::TESObjectREFR* target = a_precisionHitData.target;
-		RE::hkpRigidBody* hitRigidBody = a_precisionHitData.hitRigidBody;
+bool LocationalDamageHandler::isPowerAttack(const RE::HitData& hitData)
+{
+	return hitData.flags.any(RE::HitData::Flag::kPowerAttack);
+}
 
-		if (!target) {
-			return ret;
-		}
+PRECISION_API::PreHitCallbackReturn LocationalDamageHandler::OnPrecisionPreHit(const PRECISION_API::PrecisionHitData& a_precisionHitData)
+{
+	PRECISION_API::PreHitCallbackReturn ret;
 
-		if (!hitRigidBody) {
-			return ret;
-		}
+	const RE::TESObjectREFR* target = a_precisionHitData.target;
+	const RE::hkpRigidBody* hitRigidBody = a_precisionHitData.hitRigidBody;
 
-		if (target->GetFormType() != RE::FormType::ActorCharacter) {
-			return ret;
-		}
-
-		if (target->IsDead()) {
-			return ret;
-		}
-
-		//ctds happen if we expect the node to have a name by default
-		//plus the entire mechanic kind of hinges on nodes having a name
-		if (!hitRigidBody->name.data()) {
-			return ret;
-		}
-
-		std::string hitRigidBodyName = hitRigidBody->name.data();
-
-		PRECISION_API::PreHitModifier newModifier;
-
-		newModifier.modifierOperation = PRECISION_API::PreHitModifier::ModifierOperation::Multiplicative;
-		newModifier.modifierType = PRECISION_API::PreHitModifier::ModifierType::Damage;
-		newModifier.modifierValue = 1.0f;
-
-		for (auto& hitEffect : g_hitEffectVector) {
-			[&] {
-				if (find(hitEffect.nodeNames.begin(), hitEffect.nodeNames.end(), hitRigidBodyName) == hitEffect.nodeNames.end())
-					return;
-
-				if (hitEffect.damageMult)
-					newModifier.modifierValue = hitEffect.damageMult;
-			}();
-		}
-
-		ret.modifiers.push_back(newModifier);
-
+	if (!isTargetValid(target) || !isRigidBodyValid(hitRigidBody)) {
 		return ret;
 	}
 
-	void OnPrecisionPostHit(const PRECISION_API::PrecisionHitData& a_precisionHitData, const RE::HitData& a_vanillaHitData)
-	{
-		RE::TESObjectREFR* target = a_precisionHitData.target;
-		RE::hkpRigidBody* hitRigidBody = a_precisionHitData.hitRigidBody;
+	const std::string hitRigidBodyName = hitRigidBody->name.data();
 
-		if (!target) {
-			return;
-		}
+	PRECISION_API::PreHitModifier newModifier{};
 
-		if (!hitRigidBody) {
-			return;
-		}
+	newModifier.modifierOperation = PRECISION_API::PreHitModifier::ModifierOperation::Multiplicative;
+	newModifier.modifierType = PRECISION_API::PreHitModifier::ModifierType::Damage;
+	newModifier.modifierValue = 1.0f;
 
-		if (target->GetFormType() != RE::FormType::ActorCharacter) {
-			return;
-		}
+	for (auto& hitEffect : g_hitEffectVector) {
+		[&] {
+			if (std::ranges::find(hitEffect.nodeNames, hitRigidBodyName) == hitEffect.nodeNames.end())
+				return;
 
-		if (target->IsDead()) {
-			return;
-		}
+			if (!isnan(hitEffect.damageMult))
+				newModifier.modifierValue = hitEffect.damageMult;
+		}();
+	}
+	ret.modifiers.push_back(newModifier);
 
-		//ditto
-		if (!hitRigidBody->name.data()) {
-			return;
-		}
+	return ret;
+}
 
-		std::string hitRigidBodyName = hitRigidBody->name.data();
+void LocationalDamageHandler::OnPrecisionPostHit(const PRECISION_API::PrecisionHitData& a_precisionHitData, const RE::HitData& a_vanillaHitData)
+{
+	RE::TESObjectREFR* target = a_precisionHitData.target;
+	const RE::hkpRigidBody* hitRigidBody = a_precisionHitData.hitRigidBody;
+	const std::string hitRigidBodyName = hitRigidBody ? hitRigidBody->name.data() : std::string{};
 
-		bool isCriticalHit = a_vanillaHitData.flags.any(RE::HitData::Flag::kCritical);
-		bool isPowerAttack = a_vanillaHitData.flags.any(RE::HitData::Flag::kPowerAttack);
-
-		RE::Actor* targetActor = target->As<RE::Actor>();
-		RE::Actor* attacker = a_precisionHitData.attacker;
-
-		RE::TESObjectWEAP* weapon = a_vanillaHitData.weapon;
-
-		RE::MagicCaster* magicCaster = attacker->GetMagicCaster(magicSource);
-
-		for (auto hitEffect : g_hitEffectVector) {
-			[&] {
-				if (!isPowerAttack && hitEffect.spellOnlyPowerAttacks)
-					return;
-				if (!isCriticalHit && hitEffect.spellOnlyCriticalHits)
-					return;
-				if (!hitRigidBodyName.empty() && find(hitEffect.nodeNames.begin(), hitEffect.nodeNames.end(), hitRigidBodyName) == hitEffect.nodeNames.end())
-					return;
-				if (weapon && !hitEffect.weaponKeywords.empty() && !weapon->HasKeywordInArray(hitEffect.weaponKeywords, false))
-					return;
-
-				if (hitEffect.spellForm)
-					magicCaster->CastSpellImmediate(hitEffect.spellForm, false, targetActor, 1.0f, false, 0, NULL);
-			}();
-		}    
+	if (!isTargetValid(target) || !isRigidBodyValid(hitRigidBody)) {
+		return;
 	}
 
-	void Initialize() {
-		auto precisionInterface = reinterpret_cast<PRECISION_API::IVPrecision3*>(PRECISION_API::RequestPluginAPI(PRECISION_API::InterfaceVersion::V3));
-		
-		auto preHitResult = precisionInterface->AddPreHitCallback(SKSE::GetPluginHandle(), OnPrecisionPreHit);
-		if (preHitResult == PRECISION_API::APIResult::OK || preHitResult == PRECISION_API::APIResult::AlreadyRegistered) {
-			INFO("precision pre hit callback registered");
-		}
+	auto* targetActor = target->As<RE::Actor>();
+	RE::Actor* attacker = a_precisionHitData.attacker;
+	const RE::TESObjectWEAP* weapon = a_vanillaHitData.weapon;
+	RE::MagicCaster* magicCaster = attacker->GetMagicCaster(magicSource);
 
-		auto postHitResult = precisionInterface->AddPostHitCallback(SKSE::GetPluginHandle(), OnPrecisionPostHit);
-		if (postHitResult == PRECISION_API::APIResult::OK || postHitResult == PRECISION_API::APIResult::AlreadyRegistered) {
-			INFO("precision post hit callback registered");
-		}
+	for (auto hitEffect : g_hitEffectVector) {
+		[&] {
+			if (!isPowerAttack(a_vanillaHitData) && hitEffect.spellOnlyPowerAttacks)
+				return;
+			if (!isCriticalHit(a_vanillaHitData) && hitEffect.spellOnlyCriticalHits)
+				return;
+			if (!hitRigidBodyName.empty() && std::ranges::find(hitEffect.nodeNames, hitRigidBodyName) == hitEffect.nodeNames.end())
+				return;
+			if (weapon && !hitEffect.weaponKeywords.empty() && !weapon->HasKeywordInArray(hitEffect.weaponKeywords, false))
+				return;
+			if (hitEffect.spellForm)
+				magicCaster->CastSpellImmediate(hitEffect.spellForm, false, targetActor, 1.0f, false, 0, nullptr);
+		}();
+	}
+}
+
+void LocationalDamageHandler::Initialize()
+{
+	g_precision = static_cast<PRECISION_API::IVPrecision4*>(RequestPluginAPI(PRECISION_API::InterfaceVersion::V4));
+	if (g_precision) {
+		logger::info("Obtained PrecisionAPI");
+	} else {
+		logger::error("Unable to acquire requested PrecisionAPI interface version");
+	}
+
+	if (const auto preHitResult = g_precision->AddPreHitCallback(SKSE::GetPluginHandle(), OnPrecisionPreHit);
+		preHitResult == PRECISION_API::APIResult::OK || preHitResult == PRECISION_API::APIResult::AlreadyRegistered) {
+		logger::info("precision pre hit callback registered");
+	}
+
+	if (const auto postHitResult = g_precision->AddPostHitCallback(SKSE::GetPluginHandle(), OnPrecisionPostHit);
+		postHitResult == PRECISION_API::APIResult::OK || postHitResult == PRECISION_API::APIResult::AlreadyRegistered) {
+		logger::info("precision post hit callback registered");
 	}
 }

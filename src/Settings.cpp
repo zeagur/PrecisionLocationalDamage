@@ -20,6 +20,9 @@ namespace Settings {
 
 			if (element.contains("damageMult")) {
 				newHitEffect.damageMult = element["damageMult"];
+			} else {
+				logger::info("no damage multiplier specified, defaulted to 1.0");
+				newHitEffect.damageMult = 1.0f;
 			}
 
 			if (element.contains("weaponKeywords")) {
@@ -36,12 +39,10 @@ namespace Settings {
 
 						int formID = stoi(formIDString, nullptr, 0);
 
-						RE::BGSKeyword* newKeyword = dataHandler->LookupForm(formID, pluginName)->As<RE::BGSKeyword>();
-
-						if (newKeyword) {
+						if (auto* newKeyword = dataHandler->LookupForm(formID, pluginName)->As<RE::BGSKeyword>()) {
 							newHitEffect.weaponKeywords.push_back(newKeyword);
 						} else {
-							WARN("could not get keyword from {}", input)
+							logger::warn("could not get keyword from {}", input);
 						}
 						
 					}
@@ -58,12 +59,10 @@ namespace Settings {
 
 					int formID = stoi(formIDString, nullptr, 0);
 
-					RE::BGSKeyword* newKeyword = dataHandler->LookupForm(formID, pluginName)->As<RE::BGSKeyword>();
-
-					if (newKeyword) {
+					if (auto* newKeyword = dataHandler->LookupForm(formID, pluginName)->As<RE::BGSKeyword>()) {
 						newHitEffect.weaponKeywords.push_back(newKeyword);
 					} else {
-						WARN("could not get keyword from {}", input)
+						logger::warn("could not get keyword from {}", input);
 					}
 				}
 			}
@@ -80,12 +79,10 @@ namespace Settings {
 
 				int formID = stoi(formIDString, nullptr, 0);
 
-				RE::SpellItem* newSpellItem = dataHandler->LookupForm(formID, pluginName)->As<RE::SpellItem>();
-
-				if (newSpellItem) {
+				if (auto* newSpellItem = dataHandler->LookupForm(formID, pluginName)->As<RE::SpellItem>()) {
 					newHitEffect.spellForm = newSpellItem;
 				} else {
-					WARN("could not get spell from {}", input)
+					logger::warn("could not get spell from {}", input);
 				}
 				
 			}
@@ -98,9 +95,7 @@ namespace Settings {
 				newHitEffect.spellOnlyPowerAttacks = element["spellOnlyPowerAttacks"];
 			}
 
-			auto nodeNames = element.find("nodeNames");
-
-			if (nodeNames != element.end()) {
+			if (auto nodeNames = element.find("nodeNames"); nodeNames != element.end()) {
 				if (nodeNames->is_array()) {
 					newHitEffect.nodeNames = element["nodeNames"].get<std::vector<std::string>>();
 				} else {
@@ -109,25 +104,23 @@ namespace Settings {
 			}
 
 			g_hitEffectVector.push_back(newHitEffect);
+			logger::info("Settings loaded with damage multiplier of : {}", g_hitEffectVector.data()->damageMult);
 		}
 
-		INFO("finished parsing .yamls :)")
-
-		LocationalDamageHandler::Initialize();
+		logger::info("finished parsing .yamls :)");
 	}
 
 	void ParseConfigs(std::set<std::string>& a_configs) {
-		for (auto config : a_configs) {
+		for (const auto& config : a_configs) {
 			auto path = std::filesystem::path(config).filename();
 			auto filename = path.string();
-			INFO("Parsing {}", filename);
+			logger::info("Parsing {}", filename);
 
 			try {
-				std::ifstream i(config);
-				if (i.good()) {
+				if (std::ifstream i(config); i.good()) {
 					json data;
 					try {
-						INFO("Converting {} to JSON object", filename);
+						logger::info("Converting {} to JSON object", filename);
 						data = tojson::loadyaml(config);
 					}
 					catch (const std::exception& exc) {
@@ -154,22 +147,20 @@ namespace Settings {
 
 		std::set<std::string> configs;
 
-		auto constexpr folder = R"(Data\)"sv;
-		for (const auto& entry : std::filesystem::directory_iterator(folder)) {
+		for (auto constexpr folder = R"(Data\)"sv; const auto& entry : std::filesystem::directory_iterator(folder)) {
 			if (entry.exists() && !entry.path().empty() && (entry.path().extension() == ".yaml"sv)) {
 				const auto path = entry.path().string();
 				const auto filename = entry.path().filename().string();
-				auto lastindex = filename.find_last_of(".");
-				auto rawname = filename.substr(0, lastindex);
-				if (rawname.ends_with("_PLD")) {
-					const auto path = entry.path().string();
-					configs.insert(path);
+				const auto lastindex = filename.find_last_of('.');
+				if (auto rawname = filename.substr(0, lastindex); rawname.ends_with("_PLD")) {
+					const auto entryPath = entry.path().string();
+					configs.insert(entryPath);
 				}
 			}
 		}
 
 		if (configs.empty()) {
-			WARN("no valid .yaml files found; returning")
+			logger::warn("no valid .yaml files found; returning");
 			return;
 		}
 
