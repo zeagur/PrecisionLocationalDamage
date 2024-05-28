@@ -4,11 +4,12 @@
   "description" : "",
   "license" : "LGPL-2.1",
   "dependencies" : [
+    "catch2",
     "boost-algorithm",
     "rapidxml",
+    "rapidcsv",
     "spdlog",
     "yaml-cpp",
-    "commonlibsse-ng",
     "nlohmann-json"
   ]
 }

@@ -20,6 +20,9 @@ namespace Settings {
 
 			if (element.contains("damageMult")) {
 				newHitEffect.damageMult = element["damageMult"];
+			} else {
+				logger::info("no damage multiplier specified, defaulted to 1.0");
+				newHitEffect.damageMult = 1.0f;
 			}
 
 			if (element.contains("weaponKeywords")) {
@@ -101,6 +104,7 @@ namespace Settings {
 			}
 
 			g_hitEffectVector.push_back(newHitEffect);
+			logger::info("Settings loaded with damage multiplier of : {}", g_hitEffectVector.data()->damageMult);
 		}
 
 		logger::info("finished parsing .yamls :)");

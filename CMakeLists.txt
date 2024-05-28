@@ -45,12 +45,7 @@ file(GLOB SOURCE_FILES "src/*.cpp" "src/*.h")
 include(GNUInstallDirs)
 include(FetchContent)
 
-FetchContent_Declare(
-        yaml-cpp
-        GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
-        GIT_TAG master
-)
-FetchContent_MakeAvailable(yaml-cpp)
+set(SPDLOG_INSTALL ON)
 
 # in-place configuration
 source_group(
@@ -60,8 +55,28 @@ source_group(
         ${SOURCE_FILES}
 )
 
-find_package(CommonLibSSE CONFIG REQUIRED)
+#find_package(boost-algorithm CONFIG REQUIRED)
+#find_package(rapidxml CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
+find_package(yaml-cpp CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
+
+#FetchContent_Declare(
+#        fmt
+#        GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+#        GIT_TAG master
+#        OVERRIDE_FIND_PACKAGE
+#)
+#FetchContent_MakeAvailable(fmt)
+
+FetchContent_Declare(
+        CommonLibSSE
+        GIT_REPOSITORY https://github.com/CharmedBaryon/CommonLibSSE-NG.git
+        GIT_TAG main
+        OVERRIDE_FIND_PACKAGE
+)
+FetchContent_MakeAvailable(CommonLibSSE)
+include(${CommonLibSSE_SOURCE_DIR}/cmake/CommonLibSSE.cmake) # for the add_commonlibsse_plugin to work
 
 add_commonlibsse_plugin(
         ${PROJECT_NAME}
@@ -75,6 +90,7 @@ target_link_libraries(
         PRIVATE
         spdlog::spdlog
         yaml-cpp::yaml-cpp
+        CommonLibSSE::CommonLibSSE
 )
 
 target_compile_options(
