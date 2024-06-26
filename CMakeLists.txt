@@ -40,6 +40,12 @@ add_definitions(-DUNICODE -D_UNICODE)
 add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
 add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
+
+# Release optimization flag, turned off for debugging
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O0")
+set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O0")
+
+
 file(GLOB SOURCE_FILES "src/*.cpp" "src/*.h")
 
 include(GNUInstallDirs)
@@ -55,12 +61,6 @@ source_group(
         ${SOURCE_FILES}
 )
 
-#find_package(boost-algorithm CONFIG REQUIRED)
-#find_package(rapidxml CONFIG REQUIRED)
-find_package(spdlog CONFIG REQUIRED)
-find_package(yaml-cpp CONFIG REQUIRED)
-find_package(nlohmann_json CONFIG REQUIRED)
-
 #FetchContent_Declare(
 #        fmt
 #        GIT_REPOSITORY https://github.com/fmtlib/fmt.git
@@ -68,6 +68,13 @@ find_package(nlohmann_json CONFIG REQUIRED)
 #        OVERRIDE_FIND_PACKAGE
 #)
 #FetchContent_MakeAvailable(fmt)
+#find_package(fmt CONFIG REQUIRED)
+
+#find_package(boost-algorithm CONFIG REQUIRED)
+#find_package(rapidxml CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
+find_package(yaml-cpp CONFIG REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
 
 FetchContent_Declare(
         CommonLibSSE
@@ -88,6 +95,7 @@ add_commonlibsse_plugin(
 target_link_libraries(
         ${PROJECT_NAME}
         PRIVATE
+        fmt::fmt
         spdlog::spdlog
         yaml-cpp::yaml-cpp
         CommonLibSSE::CommonLibSSE

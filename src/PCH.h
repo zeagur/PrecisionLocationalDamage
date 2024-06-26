@@ -15,6 +15,7 @@
 #include "cstdlib"
 #include "psapi.h"
 #include "ShlObj_core.h"
+#include <iostream>
 
 #include "Settings.h"
 #include "functional"

@@ -50,17 +50,28 @@ PRECISION_API::PreHitCallbackReturn LocationalDamageHandler::OnPrecisionPreHit(c
 		}();
 	}
 	ret.modifiers.push_back(newModifier);
+	// logger::info("Pre hit : {}",ret);
 
 	return ret;
 }
 
 void LocationalDamageHandler::OnPrecisionPostHit(const PRECISION_API::PrecisionHitData& a_precisionHitData, const RE::HitData& a_vanillaHitData)
 {
+	// logger::info("Post hit : {}", a_precisionHitData.attacker->GetActorRuntimeData().race->GetName());
 	RE::TESObjectREFR* target = a_precisionHitData.target;
+	// logger::info("Post hit : target {}", target->GetName());
 	const RE::hkpRigidBody* hitRigidBody = a_precisionHitData.hitRigidBody;
-	const std::string hitRigidBodyName = hitRigidBody ? hitRigidBody->name.data() : std::string{};
+	// logger::info("Post hit : Assigning hitRigidBodyName");
+	std::string hitRigidBodyName;
+	if (hitRigidBody && hitRigidBody->name.c_str()) {
+		hitRigidBodyName = hitRigidBody->name.data();
+		// logger::info("Post hit : hitRigidBodyName IF {}", hitRigidBodyName);
+	}
+
+	// logger::info("Post hit : {} on {}", hitRigidBodyName, target->GetName());
 
 	if (!isTargetValid(target) || !isRigidBodyValid(hitRigidBody)) {
+		// logger::info("Post hit : Invalid Target, ignored");
 		return;
 	}
 
@@ -71,6 +82,7 @@ void LocationalDamageHandler::OnPrecisionPostHit(const PRECISION_API::PrecisionH
 
 	for (auto hitEffect : g_hitEffectVector) {
 		[&] {
+			// logger::info("Post hit : here");
 			if (!isPowerAttack(a_vanillaHitData) && hitEffect.spellOnlyPowerAttacks)
 				return;
 			if (!isCriticalHit(a_vanillaHitData) && hitEffect.spellOnlyCriticalHits)
